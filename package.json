@@ -1,15 +1,20 @@
 {
-	"name": "steam-be",
-	"type": "module",
-	"scripts": {
-		"dev": "wrangler dev",
-		"deploy": "wrangler deploy --minify",
-		"cf-typegen": "wrangler types --env-interface CloudflareBindings"
-	},
-	"dependencies": {
-		"hono": "^4.8.5"
-	},
-	"devDependencies": {
-		"wrangler": "^4.25.0"
-	}
+  "name": "steam-be",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy --minify",
+    "generate": "drizzle-kit generate",
+    "migrate": "wrangler d1 migrations apply DB --local",
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.44.3",
+    "hono": "^4.8.5"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.15",
+    "drizzle-kit": "^0.31.4",
+    "wrangler": "^4.25.0"
+  }
 }
