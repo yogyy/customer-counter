@@ -6,16 +6,16 @@ import { zValidator } from "@hono/zod-validator";
 import z4 from "zod/v4";
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
+const customerId = "blablabla_blebleble_blublublu";
 
 app
-  .get("/", (c) => {
-    return c.text("constantine");
-  })
+  .get("/", (c) => c.text("constantine"))
+  .basePath("/api")
   .get("/update", async (c) => {
     await createDB(c.env)
       .update(customer)
       .set({ total: sql`${customer.total} + 1` })
-      .where(eq(customer.id, "asdasdasd"));
+      .where(eq(customer.id, customerId));
 
     return c.json({ message: "total updated." });
   })
@@ -28,12 +28,14 @@ app
       await createDB(c.env)
         .update(customer)
         .set({ total })
-        .where(eq(customer.id, "asdasdasd"));
+        .where(eq(customer.id, customerId));
       return c.json({ message: "total updated!" });
     }
   )
   .get("/total", async (c) => {
-    const result = await createDB(c.env).query.customer.findFirst();
+    const result = await createDB(c.env).query.customer.findFirst({
+      where: eq(customer.id, customerId),
+    });
     return c.json(result);
   });
 
