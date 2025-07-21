@@ -4,9 +4,12 @@ import { customer } from "./db/schema";
 import { eq, sql } from "drizzle-orm";
 import { zValidator } from "@hono/zod-validator";
 import z4 from "zod/v4";
+import { cors } from "hono/cors";
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
-const customerId = "blablabla_blebleble_blublublu";
+const customerId = "blablabla";
+
+app.use("/api/*", cors({ origin: "https://binar-binar.pages.dev" }));
 
 app
   .get("/", (c) => c.text("constantine"))
