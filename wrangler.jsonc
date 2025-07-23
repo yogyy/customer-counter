@@ -12,7 +12,7 @@
     "directory": "./public"
   },
   "observability": {
-    "enabled": true
+    "enabled": false
   },
   "d1_databases": [
     {
@@ -22,5 +22,9 @@
       "migrations_dir": "drizzle",
       "migrations_table": "__drizzle_migrations"
     }
-  ]
+  ],
+  "vars": {
+    "UPSTASH_REDIS_REST_URL": "",
+    "UPSTASH_REDIS_REST_TOKEN": ""
+  }
 }
