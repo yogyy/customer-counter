@@ -4,7 +4,7 @@
  */
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "customer-counter",
+  "name": "steam-be",
   "main": "src/index.ts",
   "compatibility_date": "2025-07-18",
   "assets": {
@@ -25,6 +25,10 @@
   ],
   "vars": {
     "UPSTASH_REDIS_REST_URL": "",
-    "UPSTASH_REDIS_REST_TOKEN": ""
+    "UPSTASH_REDIS_REST_TOKEN": "",
+    "BETTER_AUTH_SECRET": "",
+    "BETTER_AUTH_URL": "http://localhost:8787",
+    "AUTH_GITHUB_ID": "",
+    "AUTH_GITHUB_SECRET": ""
   }
 }
