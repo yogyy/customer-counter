@@ -6,7 +6,6 @@ import { eq, sql } from "drizzle-orm";
 import { zValidator } from "@hono/zod-validator";
 import z4 from "zod/v4";
 import { cors } from "hono/cors";
-import { Redis } from "@upstash/redis/cloudflare";
 import { authMiddleware, authRouter } from "./lib/auth";
 
 const app = new Hono<{
@@ -39,22 +38,19 @@ app
   .route("/", authRouter)
   .basePath("/api")
   .get("/total", async (c) => {
-    const redis = Redis.fromEnv(c.env);
-
     try {
-      const cached = await redis.hgetall(cacheKey);
-      if (cached) return c.json(cached);
+      const cached = await c.env.KV.get(cacheKey);
+
+      if (cached) return c.json(JSON.parse(cached));
 
       const result = await createDB(c.env).query.customer.findFirst({
         where: eq(customer.id, customerId),
       });
 
       if (result) {
-        const p = redis.pipeline();
-        p.hset(cacheKey, result);
-        p.expire(cacheKey, 300);
-
-        await p.exec();
+        await c.env.KV.put(cacheKey, JSON.stringify(result), {
+          expirationTtl: 300,
+        });
       }
 
       return c.json(result);
@@ -79,10 +75,9 @@ app
         .where(eq(customer.id, customerId))
         .returning();
 
-      const redis = Redis.fromEnv(c.env);
-      const cached = await redis.hgetall(cacheKey);
-
-      if (cached) await redis.hset(cacheKey, data);
+      await c.env.KV.put(cacheKey, JSON.stringify(data), {
+        expirationTtl: 300,
+      });
 
       return c.json({ message: "total updated." });
     } catch (err) {
@@ -103,10 +98,9 @@ app
           .where(eq(customer.id, customerId))
           .returning();
 
-        const redis = Redis.fromEnv(c.env);
-        const cached = await redis.hgetall(cacheKey);
-
-        if (cached) await redis.hset(cacheKey, data);
+        await c.env.KV.put(cacheKey, JSON.stringify(data), {
+          expirationTtl: 300,
+        });
 
         return c.json({ message: "total updated!" });
       } catch (err) {
