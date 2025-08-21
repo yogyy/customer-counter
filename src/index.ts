@@ -15,15 +15,12 @@ const app = new Hono<{
     session: Session;
   };
 }>();
-const customerId = "yogg_F8pXzR7t-Q2nWJvBcY_5";
+const customerId = "blablablabla";
 const cacheKey = "customer:counter";
 
 app
   .use(authMiddleware)
-  .use(
-    "/api/*",
-    cors({ origin: ["https://binar-binar.pages.dev", "http://localhost:5173"] })
-  );
+  .use("/api/*", cors({ origin: ["https://binar-binar.pages.dev"] }));
 
 app
   .get("/", (c) => {
