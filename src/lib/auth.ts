@@ -1,20 +1,11 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { createDB } from "../db";
-import { Hono } from "hono";
+import { createDB } from "@/db";
 import { drizzle } from "drizzle-orm/d1";
 import { createMiddleware } from "hono/factory";
-import { decryptKey, generateKey } from "../utilts/key";
+import { decryptKey } from "@/utilts/key";
 import { eq } from "drizzle-orm";
-import * as schema from "../db/schema";
-
-const app = new Hono<{
-  Bindings: CloudflareBindings;
-  Variables: {
-    user: schema.User;
-    session: schema.Session;
-  };
-}>();
+import * as schema from "@/db/schema";
 
 export const auth = (env: CloudflareBindings) =>
   betterAuth({
@@ -33,6 +24,11 @@ export const auth = (env: CloudflareBindings) =>
         clientId: env.AUTH_GITHUB_ID,
         clientSecret: env.AUTH_GITHUB_SECRET,
         redirectURI: `${env.BETTER_AUTH_URL}/api/auth/callback/github`,
+      },
+      google: {
+        clientId: env.AUTH_GOOGLE_ID,
+        clientSecret: env.AUTH_GOOGLE_SECRET,
+        redirectURI: `${env.BETTER_AUTH_URL}/api/auth/callback/google`,
       },
     },
   });
@@ -116,44 +112,3 @@ export const authMiddleware = createMiddleware(async (c, next) => {
   }
   await next();
 });
-
-export const authRouter = app
-  .all("/api/auth/*", (c) => {
-    const authHandler = auth(c.env).handler;
-    return authHandler(c.req.raw);
-  })
-  .get("/signout", async (c) => {
-    await auth(c.env).api.signOut({
-      headers: c.req.raw.headers,
-    });
-    return c.redirect("/");
-  })
-  .get("/signin", async (c) => {
-    const signinUrl = await auth(c.env).api.signInSocial({
-      body: {
-        provider: "github",
-        callbackURL: "/",
-      },
-    });
-
-    if (!signinUrl || !signinUrl.url) {
-      return c.text("Failed to sign in", 500);
-    }
-
-    return c.redirect(signinUrl.url);
-  })
-  .post("/api/auth/token", async (c) => {
-    const user = c.get("user");
-    if (!user) {
-      return c.json({ error: "Unauthorized" }, 401);
-    }
-
-    const lastKeyGeneratedAt = new Date().getTime();
-    const token = await generateKey(
-      user.id,
-      String(lastKeyGeneratedAt),
-      c.env.BETTER_AUTH_SECRET
-    );
-
-    return c.json({ token });
-  });
