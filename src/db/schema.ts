@@ -4,6 +4,7 @@ import {
   text,
   sqliteTableCreator,
 } from "drizzle-orm/sqlite-core";
+import { relations, sql } from "drizzle-orm";
 
 export const customer = sqliteTable("customer", {
   id: text("id").primaryKey(),
@@ -80,9 +81,39 @@ export const rateLimit = sqliteTable2("rateLimit", {
   updatedAt: integer("updatedAt", { mode: "timestamp" }).notNull(),
 });
 
+export const playlistRecommendations = sqliteTable2(
+  "playlist_recommendations",
+  {
+    id: text("id").primaryKey(),
+    userId: text("userId")
+      .notNull()
+      .references(() => user.id),
+    songTitle: text("songTitle").notNull(),
+    songLink: text("songLink"),
+    createdAt: integer("createdAt", { mode: "timestamp" })
+      .notNull()
+      .default(sql`(unixepoch())`),
+  }
+);
+
+export const playlistRecommendationsRelations = relations(
+  playlistRecommendations,
+  ({ one }) => ({
+    recommendedBy: one(user, {
+      fields: [playlistRecommendations.userId],
+      references: [user.id],
+    }),
+  })
+);
+
+export const userRelations = relations(user, ({ many }) => ({
+  recommendations: many(playlistRecommendations),
+}));
+
 export type User = typeof user.$inferSelect;
 export type Session = typeof session.$inferSelect;
 export type Account = typeof account.$inferSelect;
 export type Verification = typeof verification.$inferSelect;
 export type RateLimit = typeof rateLimit.$inferSelect;
 export type Customer = typeof customer.$inferInsert;
+export type Recomendation = typeof playlistRecommendations.$inferSelect;

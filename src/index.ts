@@ -6,7 +6,9 @@ import { eq, sql } from "drizzle-orm";
 import { zValidator } from "@hono/zod-validator";
 import z4 from "zod/v4";
 import { cors } from "hono/cors";
-import { authMiddleware, authRouter } from "./lib/auth";
+import { authMiddleware } from "./lib/auth";
+import { authRouter } from "./routes/auth";
+import { playlistRouter } from "./routes/playlist";
 
 const app = new Hono<{
   Bindings: CloudflareBindings;
@@ -15,7 +17,7 @@ const app = new Hono<{
     session: Session;
   };
 }>();
-const customerId = "blablablabla";
+const customerId = "yogg_F8pXzR7t-Q2nWJvBcY_5";
 const cacheKey = "customer:counter";
 
 app
@@ -23,17 +25,18 @@ app
   .use("/api/*", cors({ origin: ["https://binar-binar.pages.dev"] }));
 
 app
-  .get("/", (c) => {
+  .get("/", async (c) => {
     const user = c.get("user");
 
     if (!user) {
-      return c.text("constantine");
+      return c.text("hello constantine");
     }
-    return c.text(user.name);
-  })
 
+    return c.text(`hello ${user.name}`);
+  })
   .route("/", authRouter)
   .basePath("/api")
+  .route("/playlist", playlistRouter)
   .get("/total", async (c) => {
     try {
       const cached = await c.env.KV.get(cacheKey);
