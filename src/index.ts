@@ -34,6 +34,7 @@ app
 
   .route("/", authRouter)
   .basePath("/api")
+  .route("/playlist", playlistRouter)
   .get("/total", async (c) => {
     try {
       const cached = await c.env.KV.get(cacheKey);
