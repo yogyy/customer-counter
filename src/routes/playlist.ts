@@ -4,7 +4,7 @@ import { createDB } from "@/db";
 import z4 from "zod/v4";
 import { zValidator } from "@hono/zod-validator";
 import { nanoid } from "nanoid";
-import { and, eq } from "drizzle-orm";
+import { and, eq, lt } from "drizzle-orm";
 
 const app = new Hono<{
   Bindings: CloudflareBindings;
@@ -23,14 +23,21 @@ const playlistIdSchema = z4.object({
   id: z4.nanoid(),
 });
 
+const paginationSchema = z4.object({
+  before: z4.string().optional(),
+});
+
 export const playlistRouter = app
-  .get("/", async (c) => {
+  .get("/", zValidator("query", paginationSchema), async (c) => {
+    const { before } = c.req.valid("query");
+    console.log(before);
     try {
       const playlist = await createDB(
         c.env
       ).query.playlistRecommendations.findMany({
-        orderBy: (playlist, { desc }) => [desc(playlist.createdAt)],
-        limit: 10,
+        orderBy: ({ createdAt }, { desc }) => [desc(createdAt)],
+        where: before ? lt(schema.createdAt, new Date(before)) : undefined,
+        limit: 30,
         with: {
           recommendedBy: {
             columns: {
@@ -41,7 +48,10 @@ export const playlistRouter = app
         },
       });
 
-      return c.json(playlist);
+      return c.json({
+        data: playlist,
+        nextCursor: playlist.at(-1)?.createdAt ?? null,
+      });
     } catch (err) {
       return c.json({ error: "Failed to fetch playlist" }, 500);
     }
