@@ -6,28 +6,49 @@ import { eq, sql } from "drizzle-orm";
 import { zValidator } from "@hono/zod-validator";
 import z4 from "zod/v4";
 import { cors } from "hono/cors";
-import { authMiddleware } from "./lib/auth";
+import { auth, authMiddleware } from "./lib/auth";
 import { authRouter } from "./routes/auth";
 import { playlistRouter } from "./routes/playlist";
 
 const app = new Hono<{
   Bindings: CloudflareBindings;
   Variables: {
-    user: User;
-    session: Session;
+    user: User | null;
+    session: Session | null;
   };
 }>();
 const customerId = "yogg_F8pXzR7t-Q2nWJvBcY_5";
 const cacheKey = "customer:counter";
 
-app
-  .use(authMiddleware)
-  .use("/api/*", cors({ origin: ["https://binar-binar.pages.dev"] }));
+app.use(
+  "/api/*",
+  cors({
+    origin: ["https://binar-binar.pages.dev", "http://localhost:5173"],
+    allowHeaders: ["Content-Type", "Authorization"],
+    allowMethods: ["POST", "GET", "OPTIONS"],
+    exposeHeaders: ["Content-Length"],
+    maxAge: 600,
+    credentials: true,
+  })
+);
+
+app.use("*", async (c, next) => {
+  const session = await auth(c.env).api.getSession({
+    headers: c.req.raw.headers,
+  });
+  if (!session) {
+    c.set("user", null);
+    c.set("session", null);
+    return next();
+  }
+  c.set("user", session.user as User);
+  c.set("session", session.session as Session);
+  return next();
+});
 
 app
   .get("/", async (c) => {
     const user = c.get("user");
-
     if (!user) {
       return c.text("hello constantine");
     }
