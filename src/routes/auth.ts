@@ -12,10 +12,8 @@ const app = new Hono<{
 }>();
 
 export const authRouter = app
-
-  .all("/api/auth/*", (c) => {
-    const authHandler = auth(c.env).handler;
-    return authHandler(c.req.raw);
+  .on(["POST", "GET"], "/api/auth/*", (c) => {
+    return auth(c.env).handler(c.req.raw);
   })
   .get("/signout", async (c) => {
     await auth(c.env).api.signOut({
